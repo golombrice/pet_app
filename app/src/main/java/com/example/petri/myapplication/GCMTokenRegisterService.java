@@ -20,6 +20,7 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -34,12 +35,12 @@ import java.util.List;
  */
 
 
-public class RegistrationIntentService extends IntentService {
+public class GCMTokenRegisterService extends IntentService {
 
     private static final String TAG = "RegIntentService";
     private static final String[] TOPICS = {"global"};
 
-    public RegistrationIntentService() {
+    public GCMTokenRegisterService() {
         super(TAG);
     }
 
@@ -47,9 +48,12 @@ public class RegistrationIntentService extends IntentService {
     protected void onHandleIntent(Intent intent) {
 //        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences prefs = getSharedPreferences("omat", 0);
-        String token = prefs.getString("token", null);
-        if( token == null ) {
-            return;
+        String token = null;
+        int user_id = 0;
+
+        while( token == null || user_id == 0 ) {
+            token = prefs.getString("token", null);
+            user_id = prefs.getInt("my_user_id", 0);
         }
         try {
             // In the (unlikely) event that multiple refresh operations occur simultaneously,
@@ -63,10 +67,10 @@ public class RegistrationIntentService extends IntentService {
                 String gcm_token = instanceID.getToken(getString(R.string.gcm_defaultSenderId),
                         GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
                 // [END get_token]
-                Log.i(TAG, "GCM Registration Token: " + token);
+                Log.i(TAG, "GCM Registration Token: " + gcm_token);
 
                 // TODO: Implement this method to send any registration to your app's servers.
-                sendRegistrationToServer(gcm_token, token);
+                sendRegistrationToServer(gcm_token, user_id, token);
 //                SharedPreferences prefs = getSharedPreferences("omat", 0);
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putString("gcm_token", gcm_token);
@@ -101,111 +105,69 @@ public class RegistrationIntentService extends IntentService {
      *
      * @param token The new token.
      */
-    private void sendRegistrationToServer(String gcm_token, String token) {
-        String urlStr = "http://80.222.146.25/~arkkaaja/register_token.php";
-        String postParameters = "id=" + token + "&token=" + gcm_token;
-        Log.d("fds", postParameters);
-        URL urlToRequest;
-        HttpURLConnection urlConnection;
-        try {
-            urlToRequest = new URL(urlStr);
-        } catch (java.net.MalformedURLException e) {
-            return;
-        }
-        try {
-            urlConnection =
-                    (HttpURLConnection) urlToRequest.openConnection();
-        } catch (java.io.IOException e) {
-            return;
-        }
-        urlConnection.setDoOutput(true);
-        try {
-            urlConnection.setRequestMethod("POST");
-        } catch (java.net.ProtocolException e) {
-            return;
-        }
-        urlConnection.setRequestProperty("Content-Type",
-                "application/x-www-form-urlencoded");
-        urlConnection.setFixedLengthStreamingMode(
-                postParameters.getBytes().length);
-
-        PrintWriter out;
-        try {
-            out = new PrintWriter(urlConnection.getOutputStream());
-        } catch (java.io.IOException e) {
-            return;
-        }
-
-        out.print(postParameters);
-        out.close();
-
-        // handle issues
-        int statusCode = 0;
-        try {
-         statusCode = urlConnection.getResponseCode();
-        } catch (java.io.IOException e) {
-            return;
-        }
-        if (statusCode == HttpURLConnection.HTTP_OK) {
-            Log.d("fds", "ok");
-        }
-    }
-
-    private void sendMessage() {
-        String urlStr = "http://80.222.146.25/~arkkaaja/send_message.php";
-        URL urlToRequest;
-        HttpURLConnection urlConnection;
-        try {
-            urlToRequest = new URL(urlStr);
-        } catch (java.net.MalformedURLException e) {
-            return;
-        }
-        try {
-            urlConnection =
-                    (HttpURLConnection) urlToRequest.openConnection();
-        } catch (java.io.IOException e) {
-            return;
-        }
-        urlConnection.setDoOutput(true);
-        try {
-            urlConnection.setRequestMethod("POST");
-        } catch (java.net.ProtocolException e) {
-            return;
-        }
-        urlConnection.setRequestProperty("Content-Type",
-                "application/json");
-
-
-        PrintWriter out;
-        try {
-            out = new PrintWriter(urlConnection.getOutputStream());
-        } catch (java.io.IOException e) {
-            return;
-        }
+    private void sendRegistrationToServer(String gcm_token, int user_id, String token) {
+        String file = "register_token.php";
 
         JSONObject msg = new JSONObject();
         try {
-            msg.put("message", "mmoi");
-            msg.put("from", "2");
-            msg.put("to", "1");
-        } catch( org.json.JSONException e ) {
-            return;
+            msg.put("user_id", user_id);
+            msg.put("google_token", token);
+            msg.put("token", gcm_token);
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
+//         = "user_id=" + user_id + "&google_token=" + token + "&token=" + gcm_token;
+        Log.d("sendGCMTokentoserver", "fdsfds");
 
-        out.print(msg.toString());
-        out.close();
+        Utilities.sendPostRequest(file, msg);
 
-        // handle issues
-        int statusCode = 0;
-        try {
-            statusCode = urlConnection.getResponseCode();
-        } catch (java.io.IOException e) {
-            return;
-        }
-        if (statusCode == HttpURLConnection.HTTP_OK) {
-            Log.d("fds", "ok");
-        }
+
+//        URL urlToRequest;
+//        HttpURLConnection urlConnection;
+//        try {
+//            urlToRequest = new URL(urlStr);
+//        } catch (java.net.MalformedURLException e) {
+//            return;
+//        }
+//        try {
+//            urlConnection =
+//                    (HttpURLConnection) urlToRequest.openConnection();
+//        } catch (java.io.IOException e) {
+//            return;
+//        }
+//        urlConnection.setDoOutput(true);
+//        try {
+//            urlConnection.setRequestMethod("POST");
+//        } catch (java.net.ProtocolException e) {
+//            return;
+//        }
+//        urlConnection.setRequestProperty("Content-Type",
+//                "application/x-www-form-urlencoded");
+//        urlConnection.setFixedLengthStreamingMode(
+//                postParameters.getBytes().length);
+//
+//        PrintWriter out;
+//        try {
+//            out = new PrintWriter(urlConnection.getOutputStream());
+//        } catch (java.io.IOException e) {
+//            return;
+//        }
+//
+//        out.print(postParameters);
+//        out.close();
+//
+//        // handle issues
+//        int statusCode = 0;
+//        try {
+//         statusCode = urlConnection.getResponseCode();
+//        } catch (java.io.IOException e) {
+//            return;
+//        }
+//        if (statusCode == HttpURLConnection.HTTP_OK) {
+//            Log.d("fds", "ok");
+//        }
     }
+
 
     /**
      * Subscribe to any GCM topics of interest, as defined by the TOPICS constant.

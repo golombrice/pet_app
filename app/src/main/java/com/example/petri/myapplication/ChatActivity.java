@@ -7,12 +7,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -37,6 +39,7 @@ public class ChatActivity extends Activity {
             ChatService.ChatBinder binder = (ChatService.ChatBinder) service;
             service_ = ((ChatService.ChatBinder) service).getService();
             bound_ = true;
+            service_.getName();
         }
 
         @Override
@@ -50,7 +53,6 @@ public class ChatActivity extends Activity {
         super.onStart();
 
         Intent intent = new Intent(this, ChatService.class);
-        intent.putExtra("from_id", my_id_);
         intent.putExtra("to_id", chat_partner_id_);
 
         bindService(intent, connection_, Context.BIND_AUTO_CREATE);
@@ -70,8 +72,9 @@ public class ChatActivity extends Activity {
     private int newest_message_id_ = 0;
     private LinearLayout chatContainer_;
     private MessageResponseReceiver receiver_;
+    private NameResponseReceiver name_receiver_;
+
     private int chat_partner_id_ = 0;
-    private int my_id_ = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +87,11 @@ public class ChatActivity extends Activity {
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         receiver_ = new MessageResponseReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(receiver_, filter);
+
+        IntentFilter filter2 = new IntentFilter(NameResponseReceiver.ACTION_RESP);
+        filter2.addCategory(Intent.CATEGORY_DEFAULT);
+        name_receiver_ = new NameResponseReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(name_receiver_, filter2);
 
 
         chatContainer_ = (LinearLayout) findViewById(R.id.chatcontainer);
@@ -106,12 +114,15 @@ public class ChatActivity extends Activity {
     }
 
     public void getNewMessages() {
+//        return;
         SQLiteDatabase dbr = helper_.getReadableDatabase();
 
+        SharedPreferences prefs = getSharedPreferences("omat", 0);
+        int my_id = prefs.getInt("my_user_id", 0);
         Cursor cursor = dbr.query(false, "messages", new String[]{"message", "message_id", "from_id"}, "((from_id = ? and to_id = ?) or (from_id = ? and to_id = ?)) and message_id > ?", new String[] {
                 Integer.toString(chat_partner_id_),
-                Integer.toString(my_id_),
-                Integer.toString(my_id_),
+                Integer.toString(my_id),
+                Integer.toString(my_id),
                 Integer.toString(chat_partner_id_),
                 Integer.toString(newest_message_id_)}, null, null, null, null);
 
@@ -123,6 +134,9 @@ public class ChatActivity extends Activity {
                     cursor.getColumnIndexOrThrow("from_id")
             );
             TextView tv = new TextView(ChatActivity.this);
+            if( from_id == chat_partner_id_ ) {
+                tv.setGravity(Gravity.RIGHT);
+            }
             tv.setText(Integer.toString(from_id) + ": " + this_message);
             chatContainer_.addView(tv);
 
@@ -169,9 +183,21 @@ public class ChatActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
 //            Log.d("messageresponsereceiver", Integer.toString(newest_message_id_));
-            if (intent.getIntExtra("from_id", 0) == chat_partner_id_ || intent.getIntExtra("from_id", 0) == my_id_) {
+            if (intent.getIntExtra("from_id", 0) == chat_partner_id_ || intent.getIntExtra("from_id", 0) == getSharedPreferences("omat", 0).getInt("my_user_id", 0)) {
                 getNewMessages();
             }
+
+
+        }
+    }
+
+    public class NameResponseReceiver extends BroadcastReceiver {
+        public static final String ACTION_RESP = "com.example.petri.NAME_RECEIVED";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+//            Log.d("messageresponsereceiver", Integer.toString(newest_message_id_));
+           setTitle(intent.getStringExtra("name"));
 
 
         }

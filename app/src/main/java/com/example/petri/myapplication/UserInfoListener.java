@@ -8,5 +8,6 @@ import java.util.ArrayList;
 public interface UserInfoListener {
 
     void receiverUserList(ArrayList< User > users);
-    void receiveRegistrationInfo(boolean registered, boolean carer);
+    void receiveRegistrationInfo(int user_id);
+    void receiveNotRegisteredNotification();
 }

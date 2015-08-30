@@ -34,9 +34,9 @@ import android.util.Log;
 
 import com.google.android.gms.gcm.GcmListenerService;
 
-public class MyGcmListenerService extends GcmListenerService {
+public class GCMMessageListenerService extends GcmListenerService {
 
-    private static final String TAG = "MyGcmListenerService";
+    private static final String TAG = "GCMMessageListener";
 
     /**
      * Called when message is received.
@@ -69,7 +69,7 @@ public class MyGcmListenerService extends GcmListenerService {
                 "message_id",
                 values);
 
-        SQLiteDatabase dbr = helper.getReadableDatabase();
+//        SQLiteDatabase dbr = helper.getReadableDatabase();
 
 //        Cursor cursor = dbr.query(false, "messages", new String[]{"message"}, null, null, null, null, null, null);
 //        cursor.moveToLast();

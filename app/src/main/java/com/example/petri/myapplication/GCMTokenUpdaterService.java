@@ -17,14 +17,10 @@
 package com.example.petri.myapplication;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
-import android.util.Log;
 
-import com.google.android.gms.iid.InstanceID;
 import com.google.android.gms.iid.InstanceIDListenerService;
 
-public class MyInstanceIDListenerService extends InstanceIDListenerService {
+public class GCMTokenUpdaterService extends InstanceIDListenerService {
 
     private static final String TAG = "MyInstanceIDLS";
 
@@ -37,7 +33,7 @@ public class MyInstanceIDListenerService extends InstanceIDListenerService {
     @Override
     public void onTokenRefresh() {
         // Fetch updated Instance ID token and notify our app's server of any changes (if applicable).
-        Intent intent = new Intent(this, RegistrationIntentService.class);
+        Intent intent = new Intent(this, GCMTokenRegisterService.class);
         startService(intent);
     }
     // [END refresh_token]

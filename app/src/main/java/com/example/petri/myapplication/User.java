@@ -10,14 +10,20 @@ public class User implements Parcelable {
 
     private int id_;
     private String name_;
+    private String message_;
 
     User() {
         name_ = "";
+        message_ = "";
+
         id_ = 0;
     }
 
     public void setName(String name) {
         name_ = name;
+    }
+    public void setMessage(String message) {
+        message_ = message;
     }
 
     public void setId(int id) {
@@ -31,6 +37,9 @@ public class User implements Parcelable {
     public String getName() {
         return name_;
     }
+    public String getMessage() {
+        return message_;
+    }
 
     public int describeContents() {
         return 0;
@@ -38,6 +47,8 @@ public class User implements Parcelable {
 
     public void writeToParcel(Parcel out, int flags) {
         out.writeString(name_);
+        out.writeString(message_);
+
         out.writeInt(id_);
     }
 
@@ -45,6 +56,8 @@ public class User implements Parcelable {
         public User createFromParcel(Parcel in) {
             User out = new User();
             out.setName(in.readString());
+            out.setMessage(in.readString());
+
             out.setId(in.readInt());
             return out;
         }

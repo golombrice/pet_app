@@ -40,25 +40,25 @@
         </receiver>
 
         <service
-            android:name=".MyGcmListenerService"
+            android:name=".GCMMessageListenerService"
             android:exported="false" >
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
             </intent-filter>
         </service>
         <!-- <service -->
-        <!-- android:name="com.example.MyInstanceIDListenerService" -->
+        <!-- android:name="com.example.GCMTokenUpdaterService" -->
         <!-- android:exported="false"> -->
         <!-- <intent-filter> -->
         <!-- <action android:name="com.google.android.gms.iid.InstanceID"/> -->
         <!-- </intent-filter> -->
         <!-- </service> -->
         <service
-            android:name=".RegistrationIntentService"
+            android:name=".GCMTokenRegisterService"
             android:exported="false" >
         </service>
         <service
-            android:name=".PopulateUsersService"
+            android:name=".MainService"
             android:exported="false" >
 
             <!-- <intent-filter> -->

@@ -7,7 +7,8 @@ import java.util.ArrayList;
  */
 public interface UserInfoListener {
 
-    void receiverUserList(ArrayList< User > users);
-    void receiveRegistrationInfo(int user_id);
-    void receiveNotRegisteredNotification();
+    void receiverUserList(int request_id, ArrayList< User > users);
+    void receiveRegistrationInfo(int request_id, int user_id);
+    void receiveNotRegisteredNotification(int request_id);
+
 }

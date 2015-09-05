@@ -54,36 +54,8 @@ public class ChatService extends Service {
 
         @Override
         protected Integer doInBackground(String... message) {
-            String urlStr = "http://80.222.146.25/~arkkaaja/send_message.php";
-            URL urlToRequest;
-            HttpURLConnection urlConnection;
-            try {
-                urlToRequest = new URL(urlStr);
-            } catch (java.net.MalformedURLException e) {
-                return 0;
-            }
-            try {
-                urlConnection =
-                        (HttpURLConnection) urlToRequest.openConnection();
-            } catch (java.io.IOException e) {
-                return 0;
-            }
-            urlConnection.setDoOutput(true);
-            try {
-                urlConnection.setRequestMethod("POST");
-            } catch (java.net.ProtocolException e) {
-                return 0;
-            }
-            urlConnection.setRequestProperty("Content-Type",
-                    "application/json");
+            String file = "send_message.php";
 
-
-            PrintWriter out;
-            try {
-                out = new PrintWriter(urlConnection.getOutputStream());
-            } catch (java.io.IOException e) {
-                return 0;
-            }
 
             JSONObject msg = new JSONObject();
             try {
@@ -94,8 +66,7 @@ public class ChatService extends Service {
                 return 0;
             }
 
-            out.print(msg.toString());
-            out.close();
+            Utilities.sendPostRequest(file, msg);
 
             DatabaseHelper helper = new DatabaseHelper(ChatService.this);
             SQLiteDatabase db = helper.getWritableDatabase();
@@ -119,17 +90,6 @@ public class ChatService extends Service {
             broadcastIntent.putExtra("from_id", getSharedPreferences("omat", 0).getInt("my_user_id", 0));
             LocalBroadcastManager.getInstance(ChatService.this).sendBroadcast(broadcastIntent);
 
-
-            // handle issues
-            int statusCode = 0;
-            try {
-                statusCode = urlConnection.getResponseCode();
-            } catch (java.io.IOException e) {
-                return 0;
-            }
-            if (statusCode == HttpURLConnection.HTTP_OK) {
-                Log.d("fds", "ok");
-            }
             return 1;
 
         }

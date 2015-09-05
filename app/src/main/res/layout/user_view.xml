@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:minHeight="40dp"
+    android:minHeight="300dp"
+    android:layout_marginTop="31dp"
+    android:background="@color/lightgray"
     android:id="@+id/user_list">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textSize="35dp"
         android:text="Large Text"
         android:id="@+id/name_field"
         android:layout_marginTop="31dp"
@@ -29,12 +32,12 @@
         android:layout_marginLeft="34dp"
         android:layout_marginRight="34dp" />
 
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="1px"
-        android:id="@+id/imageView"
-        android:src="@drawable/border"
-        android:layout_alignStart="@+id/name_field"
-        android:layout_below="@+id/comment_field"
-        android:layout_alignEnd="@+id/comment_field" />
+    <!--<ImageView-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="1px"-->
+        <!--android:id="@+id/imageView"-->
+        <!--android:src="@drawable/border"-->
+        <!--android:layout_alignStart="@+id/name_field"-->
+        <!--android:layout_below="@+id/comment_field"-->
+        <!--android:layout_alignEnd="@+id/comment_field" />-->
 </RelativeLayout>

@@ -109,7 +109,7 @@ public class LoginActivity extends Activity implements
     }
 
     private void showSignedInUI() {
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(this, TabcontainerActivity.class);
         startActivity(intent);
     }
     @Override

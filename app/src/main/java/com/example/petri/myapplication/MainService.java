@@ -28,8 +28,6 @@ public class MainService extends Service {
 //        super("MainService");
 //    }
 
-    public static final String PARAM_OUT_MSG = "omsg";
-
     public class PopulateBinder extends Binder {
         MainService getService() {
             return MainService.this;
@@ -44,58 +42,79 @@ public class MainService extends Service {
     }
 
 
-    private class userReceiveOperation extends AsyncTask<Void, Void, ArrayList<User>> {
+    private int requestid_ = 0;
+    private ArrayList<UserInfoListener> listeners_ = new ArrayList<UserInfoListener>();
+
+    public void registerListener(UserInfoListener listener) {
+        listeners_.add(listener);
+    }
+
+    public int getAmIRegistered() {
+        Log.d("mainservice", "fdssdfsdfsdf");
+        new registerCheckOperation().execute(requestid_);
+        return ++requestid_;
+    }
+
+    public int createUser() {
+        new userCreateOperation().execute(requestid_);
+        return ++requestid_;
+    }
+
+    public int getUsers() {
+        new userReceiveOperation().execute(requestid_);
+        return ++requestid_;
+
+    }
+
+    private class userCreateOperation extends AsyncTask<Integer, Void, Integer> {
 
         @Override
-        protected ArrayList<User> doInBackground(Void... arg0) {
-            String urlStr = "http://80.222.146.25/~arkkaaja/get_all_users.php";
-            URL urlToRequest;
-            HttpURLConnection urlConnection;
+        protected Integer doInBackground(Integer... arg0) {
+
+            JSONObject msg = new JSONObject();
             try {
-                urlToRequest = new URL(urlStr);
-            } catch (java.net.MalformedURLException e) {
-                return null;
+                msg.put("token", getSharedPreferences("omat", 0).getString("token", "lol"));
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-            try {
-                urlConnection =
-                        (HttpURLConnection) urlToRequest.openConnection();
-            } catch (java.io.IOException e) {
-                return null;
-            }
-            try {
-                urlConnection.setRequestMethod("GET");
-            } catch (java.net.ProtocolException e) {
-                return null;
-            }
-            try {
-                // handle issues
-                int statusCode = 0;
-                statusCode = urlConnection.getResponseCode();
-                Log.d("getuserinfo", Integer.toString(statusCode));
+            Utilities.sendPostRequest("create_user.php", msg);
 
-                if (statusCode == HttpURLConnection.HTTP_OK) {
-                    Log.d("fds", "ok");
-                }
-
-                BufferedReader in = new BufferedReader(
-                        new InputStreamReader(urlConnection.getInputStream()));
-                String inputLine;
-
-                StringBuffer response = new StringBuffer();
-
-                while ((inputLine = in.readLine()) != null) {
-                    response.append(inputLine);
-                }
-                in.close();
+            return arg0[0];
+        }
 
 
-                return jsonStringToArray(response.toString());
-            } catch (java.io.IOException e) {
+        @Override
+        protected void onPostExecute(Integer arg0) {
+            getAmIRegistered();
+        }
 
-            }
+        @Override
+        protected void onPreExecute() {
+        }
 
-            return null;
+        @Override
+        protected void onProgressUpdate(Void... values) {
+        }
+    }
 
+    private class OperationReturnValue {
+        OperationReturnValue(JSONObject o, int r) {
+            object = o;
+            request_id = r;
+        }
+        public JSONObject object;
+        public int request_id;
+    }
+
+    private class userReceiveOperation extends AsyncTask<Integer, Void, OperationReturnValue> {
+
+        @Override
+        protected OperationReturnValue doInBackground(Integer... arg0) {
+            String file = "get_all_users.php";
+
+            JSONObject users = Utilities.sendGetRequest(file, "");
+
+            return new OperationReturnValue(users, arg0[0]);
         }
 
         private ArrayList<User> jsonStringToArray(String users) {
@@ -122,12 +141,41 @@ public class MainService extends Service {
         }
 
         @Override
-        protected void onPostExecute(ArrayList<User> result) {
+        protected void onPostExecute(OperationReturnValue result) {
 //                TextView txt = (TextView) findViewById(R.id.output);
 //                txt.setText("Executed"); // txt.setText(result);
             // might want to change "executed" for the returned string passed
-            // into onPostExecute() but that is upto you
-            listener_.receiverUserList(result);
+            // into onPostExecute() but that is upto youJSONArray userlist = null;    ArrayList< User > user_array = new ArrayList< User >();
+            ArrayList< User > user_array = new ArrayList< User >();
+
+            JSONObject users = result.object;
+            int request_id = result.request_id;
+
+            JSONArray userlist = null;
+            try {
+                userlist = users.getJSONArray("users");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            for( int i = 0; i < userlist.length(); ++i ) {
+                try {
+                    JSONObject user_this = null;
+
+                    user_this = userlist.getJSONObject(i);
+
+                    user_array.add(i, new User());
+                    user_array.get(i).setName(user_this.getString("name"));
+                    user_array.get(i).setMessage(user_this.getString("comment"));
+                    user_array.get(i).setId(user_this.getInt("user_id"));
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            for( int i = 0; i < listeners_.size(); ++ i ) {
+                listeners_.get(i).receiverUserList(request_id, user_array);
+            }
         }
 
         @Override
@@ -139,23 +187,11 @@ public class MainService extends Service {
         }
     }
 
-    public int getUser() {
-        return 0;
-    }
-
-
-    public void getAmIRegistered() {
-
-
-        Log.d("mainservice", "fdssdfsdfsdf");
-        new registerCheckOperation().execute();
-    }
-
     //    private int get_user_operation_counter_ = 0;
-    private class registerCheckOperation extends AsyncTask<Void, Void, JSONObject> {
+    private class registerCheckOperation extends AsyncTask<Integer, Void, OperationReturnValue> {
 
         @Override
-        protected JSONObject doInBackground(Void... arg0) {
+        protected OperationReturnValue doInBackground(Integer... arg0) {
 
             SharedPreferences prefs = getSharedPreferences("omat", 0);
             SharedPreferences.Editor editor = prefs.edit();
@@ -167,22 +203,26 @@ public class MainService extends Service {
                 token = prefs.getString("token", null);
             }
             Log.d("registerCheckOp", "fds");
-            return Utilities.sendGetRequest("validate_token.php", "token=" + token);
+            JSONObject json =  Utilities.sendGetRequest("validate_token.php", "token=" + token);
 
+            return new OperationReturnValue(json, arg0[0]);
         }
 
 
         @Override
-        protected void onPostExecute(JSONObject result) {
+        protected void onPostExecute(OperationReturnValue r) {
 //                TextView txt = (TextView) findViewById(R.id.output);
 //                txt.setText("Executed"); // txt.setText(result);
             // might want to change "executed" for the returned string passed
             // into onPostExecute() but that is upto you
+            JSONObject result = r.object;
             Log.d("populateuserservice", result.toString());
 
             try {
                 if( result.getString("user_found").equals("false") ) {
-                    listener_.receiveNotRegisteredNotification();
+                    for( int i = 0; i < listeners_.size(); ++ i ) {
+                        listeners_.get(i).receiveNotRegisteredNotification(r.request_id);
+                    }
                     return;
                 }
             } catch (JSONException e) {
@@ -194,7 +234,9 @@ public class MainService extends Service {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            listener_.receiveRegistrationInfo(my_user_id);
+            for( int i = 0; i < listeners_.size(); ++i) {
+                listeners_.get(i).receiveRegistrationInfo(r.request_id, my_user_id);
+            }
 
         }
 
@@ -205,72 +247,5 @@ public class MainService extends Service {
         @Override
         protected void onProgressUpdate(Void... values) {
         }
-    }
-
-
-    UserInfoListener listener_;
-
-    public void registerListener(UserInfoListener listener) {
-        listener_ = listener;
-    }
-
-    public void createUser() {
-        new userCreateOperation().execute();
-    }
-
-    private class userCreateOperation extends AsyncTask<Void, Void, Void> {
-
-        @Override
-        protected Void doInBackground(Void... arg0) {
-
-            JSONObject msg = new JSONObject();
-            try {
-                msg.put("token", getSharedPreferences("omat", 0).getString("token", "lol"));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            Utilities.sendPostRequest("create_user.php", msg);
-
-            return null;
-        }
-
-
-        @Override
-        protected void onPostExecute(Void arg0) {
-            getAmIRegistered();
-        }
-
-        @Override
-        protected void onPreExecute() {
-        }
-
-        @Override
-        protected void onProgressUpdate(Void... values) {
-        }
-    }
-
-    public void getUsers() {
-        new userReceiveOperation().execute();
-    }
-
-    private String convertStreamToString(InputStream is) {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        StringBuilder sb = new StringBuilder();
-
-        String line = null;
-        try {
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append('\n');
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                is.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return sb.toString();
     }
 }

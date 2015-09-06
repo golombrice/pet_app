@@ -46,4 +46,5 @@ public class SampleFragmentPagerAdapter extends FragmentPagerAdapter {
     public Fragment getFragment(int position) {
         return fragments_.get(position);
     }
+
 }

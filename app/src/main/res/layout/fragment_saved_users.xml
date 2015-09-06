@@ -4,7 +4,12 @@
     tools:context="com.example.petri.myapplication.SavedUsersFragment">
 
     <!-- TODO: Update blank fragment layout -->
-    <TextView android:layout_width="match_parent" android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_horizontal|top"
+        android:id="@+id/saved_chats_container"></LinearLayout>
 
 </FrameLayout>

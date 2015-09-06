@@ -52,17 +52,17 @@ public class MainService extends Service {
     public int getAmIRegistered() {
         Log.d("mainservice", "fdssdfsdfsdf");
         new registerCheckOperation().execute(requestid_);
-        return ++requestid_;
+        return requestid_++;
     }
 
     public int createUser() {
         new userCreateOperation().execute(requestid_);
-        return ++requestid_;
+        return requestid_++;
     }
 
     public int getUsers() {
         new userReceiveOperation().execute(requestid_);
-        return ++requestid_;
+        return requestid_++;
 
     }
 

@@ -1,7 +1,10 @@
 package com.example.petri.myapplication;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -12,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 
 /**
@@ -22,12 +26,17 @@ import java.util.ArrayList;
  * Use the {@link SearchFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class SearchFragment extends Fragment {
+public class SearchFragment extends Fragment implements UserInfoListener, serviceConnectionListener {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
+    private HashSet<Integer> pending_requests_ = new HashSet<>();
 
+    private MainService service_;
+    private boolean bound_ = false;
+
+    private boolean users_fetched_ = false;
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
@@ -90,11 +99,17 @@ public class SearchFragment extends Fragment {
 //        }
     }
 
-    public void show_users(ArrayList< User > users_parc) {
+
+//    @Override
+//    public void onActivityCreated(Bundle savedInstanceState) {
+//        super.onActivityCreated(savedInstanceState);
+//        pending_requests_.add(service_.getUsers());
+//    }
+
+    public void show_users(ArrayList<User> users_parc) {
         LinearLayout user_list = (LinearLayout) getActivity().findViewById(R.id.userList);
 
-        for( int i = 0; i < users_parc.size(); ++i)
-        {
+        for (int i = 0; i < users_parc.size(); ++i) {
             Log.d("activ", Integer.toString(users_parc.get(i).getId()) + " " + users_parc.get(i).getName());
             UserView name_field = new UserView(getActivity());
 //            TextView name_field = new TextView(MainActivity.this);
@@ -102,10 +117,13 @@ public class SearchFragment extends Fragment {
             name_field.setMessage(users_parc.get(i).getMessage());
 //            name_field.setTextSize(25);
             final int user_id = users_parc.get(i).getId();
+            final String user_name = users_parc.get(i).getName();
+
             name_field.setOnClickListener(// Create an anonymous implementation of OnClickListener
                     new View.OnClickListener() {
                         public void onClick(View v) {
                             // do something when the button is clicked
+                            addChatToDatabase(user_id, user_name);
                             UserView tv = (UserView) v;
                             Intent intent = new Intent(getActivity(), ChatActivity.class);
                             intent.putExtra("chat_id", user_id);
@@ -117,10 +135,68 @@ public class SearchFragment extends Fragment {
         }
     }
 
+    private void addChatToDatabase(int user_id, String user_name) {
+
+        DatabaseHelper helper = new DatabaseHelper(getActivity());
+        SQLiteDatabase db = helper.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("user_id", user_id);
+        values.put("user_name", user_name);
+
+        // Insert the new row, returning the primary key value of the new row
+        long newRowId;
+        newRowId=db.insert(
+                "chats",
+                null,
+                values);
+    }
+
     @Override
     public void onDetach() {
         super.onDetach();
 //        mListener = null;
+    }
+
+    @Override
+    public void receiverUserList(int request_id, ArrayList<User> users) {
+        if ( !pending_requests_.contains(request_id) ) {
+            return;
+        }
+
+        pending_requests_.remove(request_id);
+
+        show_users(users);
+        users_fetched_ = true;
+
+
+
+    }
+
+    @Override
+    public void receiveRegistrationInfo(int request_id, int user_id) {
+
+    }
+
+    @Override
+    public void receiveNotRegisteredNotification(int request_id) {
+
+    }
+
+    @Override
+    public void onConnected(MainService service) {
+        service_ = service;
+        bound_ = true;
+        service_.registerListener(this);
+
+        if( !users_fetched_ ) {
+            pending_requests_.add(service_.getUsers());
+        }
+    }
+
+    @Override
+    public void onDisconnected(ComponentName name) {
+        bound_ = false;
     }
 
     /**

@@ -8,13 +8,13 @@ import android.database.sqlite.SQLiteOpenHelper;
  * Created by petri on 21/08/15.
  */
 public class DatabaseHelper extends SQLiteOpenHelper {
-    private static final int DATABASE_VERSION = 7;
+    private static final int DATABASE_VERSION = 10;
     private static final String DATABASE_NAME = "test";
 
     private static final String MESSAGE_TABLE_CREATION =
             "CREATE TABLE messages(message_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, message TEXT, from_id INTEGER, to_id INTEGER)";
-    private static final String MY_MESSAGE_TABLE_CREATION =
-            "CREATE TABLE my_messages(message_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, message TEXT, to_id INTEGER)";
+    private static final String CHAT_TABLE_CREATION =
+            "CREATE TABLE chats(user_id INTEGER PRIMARY KEY NOT NULL, user_name TEXT, last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP)";
 
 
     DatabaseHelper(Context context) {
@@ -25,17 +25,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
 
         db.execSQL(MESSAGE_TABLE_CREATION);
-//        db.execSQL(MY_MESSAGE_TABLE_CREATION);
+        db.execSQL(CHAT_TABLE_CREATION);
 
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldversion, int newversion) {
         db.execSQL("DROP TABLE IF EXISTS messages");
-//        db.execSQL("DROP TABLE IF EXISTS my_messages");
+        db.execSQL("DROP TABLE IF EXISTS chats");
 
         db.execSQL(MESSAGE_TABLE_CREATION);
-//        db.execSQL(MY_MESSAGE_TABLE_CREATION);
+        db.execSQL(CHAT_TABLE_CREATION);
 
     }
 }

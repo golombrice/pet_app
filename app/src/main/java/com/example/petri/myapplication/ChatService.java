@@ -84,6 +84,10 @@ public class ChatService extends Service {
                     "message_id",
                     values);
 
+
+            String strSQL = "UPDATE chats SET last_activity = CURRENT_TIMESTAMP WHERE user_id = "+ to_id_;
+            db.execSQL(strSQL);
+
             Intent broadcastIntent = new Intent();
             broadcastIntent.setAction(ChatActivity.MessageResponseReceiver.ACTION_RESP);
             broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);

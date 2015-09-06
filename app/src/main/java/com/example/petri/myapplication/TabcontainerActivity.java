@@ -33,7 +33,7 @@ public class TabcontainerActivity extends AppCompatActivity implements UserInfoL
     private boolean bound_ = false;
     private boolean users_fetched_ = false;
 
-    private HashSet< Integer > pending_requests_;
+    private HashSet< Integer > pending_requests_ = new HashSet<>();
 
     private ServiceConnection connection_ = new ServiceConnection() {
         @Override
@@ -48,6 +48,9 @@ public class TabcontainerActivity extends AppCompatActivity implements UserInfoL
                 pending_requests_.add(request_id);
             }
 
+//            for(int i=0; i < pager_adapter_.getCount(); ++i ) {
+                ((serviceConnectionListener) pager_adapter_.getFragment(0)).onConnected(service_);
+//            }
         }
 
         @Override
@@ -95,9 +98,7 @@ public class TabcontainerActivity extends AppCompatActivity implements UserInfoL
 //        filter.addCategory(Intent.CATEGORY_DEFAULT);
 //        receiver = new userResponseReceiver();
 //        registerReceiver(receiver, filter);
-        dialog = new ProgressDialog(this);
-        dialog.setMessage("Please wait");
-        dialog.show();
+
 
         Intent intent = new Intent(this, MainService.class);
         startService(intent);
@@ -105,22 +106,9 @@ public class TabcontainerActivity extends AppCompatActivity implements UserInfoL
         Intent intent3 = new Intent(TabcontainerActivity.this, GCMMessageListenerService.class);
         startService(intent3);
 
-//
-//        Button button = (Button) findViewById(R.id.fetch_users_button);
-//        button.setOnClickListener(// Create an anonymous implementation of OnClickListener
-//                new View.OnClickListener() {
-//                    public void onClick(View v) {
-//                        if(!users_fetched_) {
-//                            service_.getAmIRegistered();
-//                            service_.getUsers();
-//                        }
-//
-//                    }
-//                });
 
     }
 
-    private ArrayList< User > found_users_;
 
     @Override
     public void receiverUserList(int request_id, ArrayList< User > users_parc) {
@@ -129,28 +117,17 @@ public class TabcontainerActivity extends AppCompatActivity implements UserInfoL
         }
 
         pending_requests_.remove(request_id);
-        found_users_ = users_parc;
-        Log.d("hei", "moi");
-//        final ArrayList<User> users_parc = intent.getParcelableArrayListExtra(MainService.PARAM_OUT_MSG);
-        Log.d("activity", users_parc.toString());
 
-
-        SearchFragment search_fragment = (SearchFragment)pager_adapter_.getFragment(0);
-        search_fragment.show_users(found_users_);
-        users_fetched_ = true;
-
-
-
-        if (dialog.isShowing()) {
-            dialog.dismiss();
-        }
 
     }
+
+
 
 
     @Override
     public void receiveRegistrationInfo(int request_id, int user_id) {
         if ( !pending_requests_.contains(request_id) ) {
+            Log.d("receiveRegisterInfo", Integer.toString(request_id));
             return;
         }
 

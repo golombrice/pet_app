@@ -13,6 +13,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Message;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -28,7 +30,7 @@ import java.util.ArrayList;
 
 import android.support.v4.content.LocalBroadcastManager;
 
-public class ChatActivity extends Activity {
+public class ChatActivity extends AppCompatActivity {
 
     private ChatService service_;
     private boolean bound_ = false;

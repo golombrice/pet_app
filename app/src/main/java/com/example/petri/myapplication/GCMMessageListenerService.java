@@ -68,6 +68,8 @@ public class GCMMessageListenerService extends GcmListenerService {
                 "messages",
                 "message_id",
                 values);
+        String strSQL = "UPDATE chats SET last_activity = CURRENT_TIMESTAMP WHERE user_id = "+ from_id;
+        db.execSQL(strSQL);
 
 //        SQLiteDatabase dbr = helper.getReadableDatabase();
 
